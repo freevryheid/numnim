@@ -1,20 +1,14 @@
 import
-  lapack
-
-type
-  Matrix*[M,N: static[int]; T] = array[1..M, array[1..N, T]]
-
-template
-  fp[M,N,T](m: Matrix[M,N,T]): ptr T = cast[ptr T](m[1].unsafeAddr)
+  types, lapack
 
 proc
   solve*[M,N,T](A: Matrix[M,M,T]; b: Matrix[N,M,T]): Matrix[N,M,T] =
   var
-    ipvt: array[M, cint]
-    ipvt_ptr = cast[ptr cint](ipvt.addr)
+    ipvt: array[M, int]
+    ipvt_ptr = cast[ptr int](ipvt.addr)
     info: cint
-    m: cint = cast[cint](M)
-    n: cint = cast[cint](N)
+    m: int = M
+    n: int = N
     mptr = m.addr
     nptr = n.addr
     iptr = info.addr
