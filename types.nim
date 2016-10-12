@@ -22,17 +22,40 @@ proc `$`*[M, N: static[int]; O](m: Matrix[M, N, O]): string =
       result.add $m[i][j] & " "
     result.add "]\n"
 
-proc zeros*(M, N: static[int], O: typedesc): Matrix[M, N, O] =
+proc zeros*(M: int; N: int = 0 ; O: typedesc): Matrix[M, N, O] =
   ## matrix of zeros
+  when N == 0:
+    N = M
   for i in 1..M:
     for j in 1..N:
-      result[i][j] = cast[O](0)
+      when not (O is Complex):
+        result[i][j] = cast[O](0)
+      else:
+        when (O is complex32):
+          result[i][j] = (re:0.0'f32, im:0.0'f32)
+        else:
+          result[i][j] = (re:0.0'f64, im:0.0'f64)
 
-proc ones*(M, N: static[int], O: typedesc): Matrix[M, N, O] =
-  ## matrix of ones
-  for i in 1..M:
-    for j in 1..N:
-        result[i][j] = cast[O](1.0)
+# proc ones*(M, N=M: static[int]; O: typedesc): Matrix[M, N, O] =
+#   ## matrix of ones
+#   for i in 1..M:
+#     for j in 1..N:
+#       when not (O is Complex):
+#         when (O is float32):
+#           result[i][j] = cast[O](1'f32)
+#         elif (O is float64):
+#           result[i][j] = cast[O](1'f64)
+#         else:
+#           result[i][j] = cast[O](1)
+#       else:
+#         when (O is complex32):
+#           result[i][j] = (re:1.0'f32, im:0.0'f32)
+#         else:
+#           result[i][j] = (re:1.0'f64, im:0.0'f64)
+
+#proc eye*(M, N=M: static[int]; P=0: int; O: typedesc): Matrix[M, N, O] =
+#  ## matrix with ones on the diagonal and zeros elsewhere
+
 
 proc T*[M, N: static[int]; O](m: Matrix[M, N, O]): Matrix[N, M, O] =
   ## transpose matrix
@@ -42,5 +65,5 @@ proc T*[M, N: static[int]; O](m: Matrix[M, N, O]): Matrix[N, M, O] =
 
 when isMainModule:
 
-  let a = ones(5, 5, complex64)
+  let a = zeros(5, int)
   echo $a
