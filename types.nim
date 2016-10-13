@@ -4,16 +4,19 @@
 ## N Columns
 ## O (oh blood:) Type
 
+## basic types
 type
   Matrix*[M, N: static[int]; O] = array[1..M, array[1..N, O]]
   Complex*[O] = tuple[re, im: O]
   complex32* = Complex[float32]
   complex64* = Complex[float64]
 
+## floating pointer
 template
   fp*[M, N: static[int]; O](m: Matrix[M, N, O]): ptr O = cast[ptr T](m[1].unsafeAddr)
 
-proc `$`*[M, N: static[int]; O](m: Matrix[M, N, O]): string =
+proc
+  `$`*[M, N: static[int]; O](m: Matrix[M, N, O]): string =
   ## print matrix
   result = ""
   for i in 1..M:
@@ -22,10 +25,34 @@ proc `$`*[M, N: static[int]; O](m: Matrix[M, N, O]): string =
       result.add $m[i][j] & " "
     result.add "]\n"
 
-proc zeros*(M: int; N: int = 0 ; O: typedesc): Matrix[M, N, O] =
-  ## matrix of zeros
-  when N == 0:
-    N = M
+proc `$`*[O](a: openArray[O]): string =
+  ## print array
+  result = " [ "
+  for i in low(a)..high(a):
+    result.add $a[i] & " "
+  result.add "]\n"
+
+proc
+  matrix*[O](o: openArray[O]; M, N: static[int]): Matrix[M, N, O] =
+  ## matrix from array
+  var k = low(o)
+  for i in 1..M:
+    for j in 1..N:
+      result[i][j] = o[k]
+      inc k
+
+proc
+  flatten*[M, N: static[int]; O](m: Matrix[M, N, O]): array[1..M*N,O] =
+  ## convert matrix to array
+  var k = 1
+  for i in 1..M:
+    for j in 1..N:
+      result[k] = m[i][j]
+      inc k
+
+proc
+  zeros*(M, N: static[int]; O: typedesc): Matrix[M, N, O] =
+  ## any matrix of zeros
   for i in 1..M:
     for j in 1..N:
       when not (O is Complex):
@@ -36,34 +63,68 @@ proc zeros*(M: int; N: int = 0 ; O: typedesc): Matrix[M, N, O] =
         else:
           result[i][j] = (re:0.0'f64, im:0.0'f64)
 
-# proc ones*(M, N=M: static[int]; O: typedesc): Matrix[M, N, O] =
-#   ## matrix of ones
-#   for i in 1..M:
-#     for j in 1..N:
-#       when not (O is Complex):
-#         when (O is float32):
-#           result[i][j] = cast[O](1'f32)
-#         elif (O is float64):
-#           result[i][j] = cast[O](1'f64)
-#         else:
-#           result[i][j] = cast[O](1)
-#       else:
-#         when (O is complex32):
-#           result[i][j] = (re:1.0'f32, im:0.0'f32)
-#         else:
-#           result[i][j] = (re:1.0'f64, im:0.0'f64)
+proc
+  zero*(M: static[int]; O: typedesc): Matrix[M, M, O] =
+  ## square matric of zeros
+  zeros(M, M, O)
 
-#proc eye*(M, N=M: static[int]; P=0: int; O: typedesc): Matrix[M, N, O] =
-#  ## matrix with ones on the diagonal and zeros elsewhere
+proc
+  ones*(M, N: static[int]; O: typedesc): Matrix[M, N, O] =
+  ## matrix of ones
+  for i in 1..M:
+    for j in 1..N:
+      when not (O is Complex):
+        when (O is float32):
+          result[i][j] = cast[O](1'f32)
+        elif (O is float64):
+          result[i][j] = cast[O](1'f64)
+        else:
+          result[i][j] = cast[O](1)
+      else:
+        when (O is complex32):
+          result[i][j] = (re:1.0'f32, im:0.0'f32)
+        else:
+          result[i][j] = (re:1.0'f64, im:0.0'f64)
 
+proc
+  one*(M: static[int]; O: typedesc): Matrix[M, M, O] =
+  ## square matric of ones
+  ones(M,M,O)
 
-proc T*[M, N: static[int]; O](m: Matrix[M, N, O]): Matrix[N, M, O] =
+proc
+  eyes*(M, N: static[int]; O: typedesc; P: int = 0): Matrix[M, N, O] =
+  ## any matrix with ones on the diagonal and zeros elsewhere
+  result = zeros(M, N, O)
+  for i in 1..M:
+    for j in 1..N:
+      if (i == j) and (i + P <= M) and (j + P <= N):
+        when not (O is Complex):
+          when (O is float32):
+            result[i+P][j+P] = cast[O](1'f32)
+          elif (O is float64):
+            result[i+P][j+P] = cast[O](1'f64)
+          else:
+            result[i+P][j+P] = cast[O](1)
+        else:
+          when (O is complex32):
+            result[i+P][j+P] = (re:1.0'f32, im:0.0'f32)
+          else:
+            result[i+P][j+P] = (re:1.0'f64, im:0.0'f64)
+
+proc
+  eye*(M: static[int]; O: typedesc; P: int = 0): Matrix[M, M, O] =
+  ## square matrix with ones on the diagonal and zeros elsewhere
+  eyes(M, M, O, P)
+
+proc
+  T*[M, N: static[int]; O](m: Matrix[M, N, O]): Matrix[N, M, O] =
   ## transpose matrix
   for i in 1..N:
     for j in 1..M:
       result[i][j] = m[j][i]
 
 when isMainModule:
-
-  let a = zeros(5, int)
+  let
+    a = eye(5, int, 1)
   echo $a
+
